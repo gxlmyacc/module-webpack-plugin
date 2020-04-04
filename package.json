@@ -20,7 +20,8 @@
     "lib/",
     "index.js",
     "default_index.js",
-    "typings.d.ts"
+    "typings.d.ts",
+    "remote/"
   ],
   "scripts": {
   },
