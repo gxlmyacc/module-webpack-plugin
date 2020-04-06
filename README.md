@@ -23,7 +23,7 @@ config as follows:
 const ModuleWebpackPlugin = require('module-webpack-plugin')
 
 module.exports = {
-  entry: 'index.js',
+  entry: 'src/index.js',
   output: {
     path: __dirname + '/dist',
     filename: 'index_bundle.js'
@@ -42,10 +42,28 @@ module.exports = {
       commonjs: 'lodash'
     }
   },
+  optimization: {
+    runtimeChunk: true,
+  },
   plugins: [
     new ModuleWebpackPlugin()
   ]
 }
+```
+
+**src/index.js**
+```js
+import React from 'react';
+import ReactDOM from 'react-dom';
+import _ from 'lodash',
+
+const test = {
+  dosomething() {
+    console.log('dosomething', React, ReactDOM, _);
+  }
+}
+
+module.exports = test;
 ```
 
 **host usage**
