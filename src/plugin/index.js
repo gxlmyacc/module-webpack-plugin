@@ -145,7 +145,7 @@ class ModuleWebpackPlugin {
     const defaultOptions = {
       template: 'auto',
       templateContent: false,
-      templateParameters: templateParametersGenerator,
+      templateParameters: null,
       filename: 'index.js',
       runtime: /(manifest|runtime~).+[.]js$/,
       hash: false,
@@ -398,19 +398,20 @@ class ModuleWebpackPlugin {
    * @returns {Promise<{[key: any]: any}>}
    */
   getTemplateParameters(compilation, assets) {
-    const templateParameters = this.options.templateParameters;
-    if (templateParameters === false) {
-      return Promise.resolve({});
-    }
-    if (typeof templateParameters === 'function') {
-      return Promise
-        .resolve()
-        .then(() => templateParameters(compilation, assets, this.options, this.version));
-    }
-    if (typeof templateParameters === 'object') {
-      return Promise.resolve(templateParameters);
-    }
-    throw new Error('templateParameters has to be either a function or an object');
+    return Promise
+      .resolve()
+      .then(() => templateParametersGenerator(compilation, assets, this.options, this.version))
+      .then(params => {
+        const templateParameters = this.options.templateParameters;
+        if (typeof templateParameters === 'object') Object.assign(params, templateParameters);
+        if (typeof templateParameters === 'function') {
+          return Promise
+            .resolve()
+            .then(() => templateParameters(compilation, assets, this.options, this.version))
+            .then(params2 => Object.assign(params, params2));
+        }
+        return params;
+      });
   }
 
   /**
