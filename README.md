@@ -74,8 +74,15 @@ import ReactDOM from 'react-dom';
 import _ from 'lodash',
 
 const test = await remote('http://localhost:3000/test/index.js', {
+  // regisiter externals when call reomte
   externals: { React, ReactDOM, _ }
 });
+
+// or register externals only once
+Object.assign(remote.externals, { React, ReactDOM, _ });
+const test = await remote('http://localhost:3000/test/index.js');
+
+
 test.dosomething();
 ```
 
