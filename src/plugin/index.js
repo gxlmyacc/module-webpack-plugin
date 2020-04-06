@@ -1,9 +1,10 @@
 // @ts-check
 // Import types
-/** @typedef {import("./typings").HtmlTagObject} HtmlTagObject */
-/** @typedef {import("./typings").Options} ModuleWebpackOptions */
-/** @typedef {import("./typings").ProcessedOptions} ProcessedModuleWebpackOptions */
-/** @typedef {import("./typings").TemplateParameter} TemplateParameter */
+/** @typedef {import("../../typings").HtmlTagObject} HtmlTagObject */
+/** @typedef {import("../../typings").Options} ModuleWebpackOptions */
+/** @typedef {import("../../typings").ProcessedOptions} ProcessedModuleWebpackOptions */
+/** @typedef {import("../../typings").TemplateAssets} TemplateAssets */
+/** @typedef {import("../../typings").TemplateParameter} TemplateParameter */
 /** @typedef {import("webpack/lib/Compiler.js")} WebpackCompiler */
 /** @typedef {import("webpack/lib/Compilation.js")} WebpackCompilation */
 /** @typedef {import("webpack/lib/WebpackError.js")} WebpackError */
@@ -56,6 +57,53 @@ function resolveGlobalObject(compilation, options) {
     : outputOptions.globalObject;
 }
 
+/**
+ * is Plain Object
+ * @param {any} v
+  * @returns {boolean}
+  */
+function isPlainObject(v) {
+  return toString.call(v) === '[object Object]';
+}
+
+/**
+ * resolve webpack externals
+ * @param {WebpackCompilation} compilation
+  * @param {ProcessedModuleWebpackOptions} options
+  * @returns {Array<string>}
+  */
+function resolveExternals(compilation, options) {
+  let ret = [];
+  let external = compilation.options.externals || [];
+  const _obj = obj => {
+    let r = [];
+    Object.keys(obj).forEach(key => {
+      let v = obj[key];
+      if (!v) r.push(key);
+      else if (typeof v === 'string') r.push(v);
+      else if (v.root) r.push(v.root);
+      else if (v.commonjs) r.push(v.commonjs);
+    });
+    return r;
+  };
+  const _arr = arr => {
+    let r = [];
+    arr.forEach(v => {
+      if (!v) return;
+      if (typeof v === 'string') r.push(v);
+      else if (isPlainObject(v)) {
+        if (v.root) r.push(v.root);
+        else if (v.commonjs) r.push(v.commonjs);
+        else r.push(..._obj(v));
+      }
+    });
+    return r;
+  };
+  if (Array.isArray(external)) ret.push(..._arr(external));
+  else if (isPlainObject(external)) ret.push(..._obj(external));
+  return ret;
+}
+
 
 /**
  * The default for options.templateParameter
@@ -63,24 +111,7 @@ function resolveGlobalObject(compilation, options) {
  *
  * Generate the template parameters for the template function
  * @param {WebpackCompilation} compilation
- * @param {{
-   publicPath: string,
-   entryFile: string,
-   chunks: {
-    files: {
-      js: any,
-      css: any,
-    }
-  },
-  entrys: {
-    id: string|number,
-    ids: Array<{ id: string|number, isRuntime: boolean, isEntry: boolean }>,
-    js: Array<{ file: string, isRuntime: boolean, isEntry: boolean }>,
-    css: Array<{ file: string, isEntry: boolean }>,
-  },
-   manifest?: string,
-   runtime?: { file: string, source: string },
- }} assets
+ * @param {TemplateAssets} assets
  * @param {ProcessedModuleWebpackOptions} options
  * @param {number} version
  * @returns {TemplateParameter}
@@ -101,6 +132,7 @@ function templateParametersGenerator(compilation, assets, options, version) {
 }
 
 class ModuleWebpackPlugin {
+
   /**
    * @param {ModuleWebpackOptions} [options]
    */
@@ -362,23 +394,7 @@ class ModuleWebpackPlugin {
   /**
    * Generate the template parameters for the template function
    * @param {WebpackCompilation} compilation
-   * @param {{
-      publicPath: string,
-      entryFile: string,
-      chunks: {
-        files: {
-          js: any,
-          css: any,
-        }
-      },
-      entrys: {
-        ids: Array<{ id: string|number, isRuntime: boolean, isEntry: boolean }>,
-        js: Array<{ file: string, isRuntime: boolean, isEntry: boolean }>,
-        css: Array<{ file: string, isEntry: boolean }>,
-      },
-      manifest?: string,
-      runtime?: { file: string, source: string },
-    }} assets
+   * @param {TemplateAssets} assets
    * @returns {Promise<{[key: any]: any}>}
    */
   getTemplateParameters(compilation, assets) {
@@ -401,23 +417,7 @@ class ModuleWebpackPlugin {
    * This function renders the actual html by executing the template function
    *
    * @param {(templateParameters) => string | Promise<string>} templateFunction
-   * @param {{
-      publicPath: string,
-      entryFile: string,
-      chunks: {
-        files: {
-          js: any,
-          css: any,
-        }
-      },
-      entrys: {
-        ids: Array<{ id: string|number, isRuntime: boolean, isEntry: boolean }>,
-        js: Array<{ file: string, isRuntime: boolean, isEntry: boolean }>,
-        css: Array<{ file: string, isEntry: boolean }>,
-      },
-      manifest?: string,
-      runtime?: { file: string, source: string },
-    }} assets
+   * @param {TemplateAssets} assets
    * @param {WebpackCompilation} compilation
    *
    * @returns Promise<string>
@@ -508,23 +508,7 @@ class ModuleWebpackPlugin {
   /**
    * Check if the given asset object consists only of hot-update.js files
    *
-   * @param {{
-      publicPath: string,
-      entryFile: string,
-      chunks: {
-        files: {
-          js: any,
-          css: any,
-        }
-      },
-      entrys: {
-        ids: Array<{ id: string|number, isRuntime: boolean, isEntry: boolean }>,
-        js: Array<{ file: string, isRuntime: boolean, isEntry: boolean }>,
-        css: Array<{ file: string, isEntry: boolean }>,
-      },
-      manifest?: string,
-      runtime?: { file: string, source: string },
-    }} assets
+   * @param {TemplateAssets} assets
    */
   isHotUpdateCompilation(assets) {
     return assets.entrys.js.length && assets.entrys.js.every(assetPath => /\.hot-update\.js$/.test(assetPath.file));
@@ -535,23 +519,7 @@ class ModuleWebpackPlugin {
    * for all given entry names
    * @param {WebpackCompilation} compilation
    * @param {string[]} entryNames
-   * @returns {{
-      publicPath: string,
-      entryFile: string,
-      chunks: {
-        files: {
-          js: any,
-          css: any,
-        }
-      },
-      entrys: {
-        ids: Array<{ id: string|number, isRuntime: boolean, isEntry: boolean }>,
-        js: Array<{ file: string, isRuntime: boolean, isEntry: boolean }>,
-        css: Array<{ file: string, isEntry: boolean }>,
-      },
-      manifest?: string,
-      runtime?: { file: string, source: string },
-    }}
+   * @returns {TemplateAssets}
    */
   moduleWebpackPluginAssets(compilation, childCompilationOutputName, entryNames) {
     const compilationHash = compilation.hash;
@@ -611,29 +579,13 @@ class ModuleWebpackPlugin {
     }
 
 
-    /**
-     * @type {{
-        publicPath: string,
-        entryFile: string,
-        chunks: {
-          files: {
-            js: any,
-            css: any,
-          }
-        },
-        entrys: {
-          ids: Array<{ id: string|number, isRuntime: boolean, isEntry: boolean }>,
-          js: Array<{ file: string, isRuntime: boolean, isEntry: boolean }>,
-          css: Array<{ file: string, isEntry: boolean }>,
-        },
-        manifest?: string,
-        runtime?: { file: string, source: string },
-      }}
-     */
     const assets = {
       // The public path
       publicPath,
+      // the entry file
       entryFile: '',
+      // the webpack externals
+      externals: [],
       // Will contian all chunk files
       chunks: {
         files: {
@@ -658,6 +610,8 @@ class ModuleWebpackPlugin {
         else if ((/\.(js|mjs)(\?|$)/).test(file)) assets.chunks.files.js[chunk.id] = file;
       });
     });
+
+    assets.externals = resolveExternals(compilation, this.options);
 
     // assetKeys.forEach(file => {
     //   if (!path.basename(file).match(this.options.runtime)) return;
@@ -802,6 +756,7 @@ class ModuleWebpackPlugin {
     files.sort();
     return files;
   }
+
 }
 
 // Statics:

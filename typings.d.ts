@@ -13,6 +13,25 @@ declare namespace ModuleWebpackPlugin {
 
   interface Options extends Partial<ProcessedOptions> { }
 
+  interface TemplateAssets {
+    publicPath: string,
+    entryFile: string,
+    externals: Array<any>,
+    chunks: {
+      files: {
+        js: any,
+        css: any,
+      }
+    },
+    entrys: {
+      ids: Array<{ id: string|number, isRuntime: boolean, isEntry: boolean }>,
+      js: Array<{ file: string, isRuntime: boolean, isEntry: boolean }>,
+      css: Array<{ file: string, isEntry: boolean }>,
+    },
+    manifest?: string,
+    runtime?: { file: string, source: string },
+  }
+
   /**
    * The plugin options after adding default values
    */
@@ -72,22 +91,7 @@ declare namespace ModuleWebpackPlugin {
     | false // Pass an empty object to the template function
     | ((
       compilation: any,
-      assets: {
-        publicPath: string;
-        entryFile: string;
-        chunks: {
-          files: {
-            js: any,
-            css: any,
-          }
-        },
-        entrys: {
-          ids: Array<{ id: string|number, isRuntime: boolean, isEntry: boolean }>,
-          js: Array<{ file: string, isRuntime: boolean, isEntry: boolean }>,
-          css: Array<{ file: string, isEntry: boolean }>,
-        },
-        manifest?: string;
-      },
+      assets: TemplateAssets,
       options: ProcessedOptions,
       version: number,
     ) => { [option: string]: any } | Promise<{ [option: string]: any }>)
@@ -107,26 +111,12 @@ declare namespace ModuleWebpackPlugin {
   interface TemplateParameter {
     version: number,
     compilation: any;
-    package: any,
-    globalObject: string,
+    package: any;
+    globalObject: string;
     moduleWebpackPlugin: {
       scopeName: string,
-      publicPath: string;
-      entryFile: string;
-      chunks: {
-        files: {
-          js: any,
-          css: any,
-        }
-      },
-      entrys: {
-        ids: Array<{ id: string|number, isRuntime: boolean, isEntry: boolean }>,
-        js: Array<{ file: string, isRuntime: boolean, isEntry: boolean }>,
-        css: Array<{ file: string, isEntry: boolean }>,
-      },
-      manifest?: string;
       options: Options;
-    };
+    } | TemplateAssets;
     webpackConfig: any;
   }
 

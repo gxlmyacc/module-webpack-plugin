@@ -2,13 +2,14 @@
 
 module.exports = function ({
   version,
-  moduleWebpackPlugin: { scopeName, entryFile, chunks, publicPath, entrys }
+  moduleWebpackPlugin: { scopeName, entryFile, chunks, externals, publicPath, entrys }
 }) {
   const data = {
     version,
     entryFile,
     scopeName,
     publicPath,
+    externals,
     jsChunk: chunks.files.js,
     cssChunk: chunks.files.css,
     entrys: {

@@ -1,6 +1,3 @@
-// @ts-nocheck
-
-
 const PrettyError = require('pretty-error');
 
 const prettyError = new PrettyError();

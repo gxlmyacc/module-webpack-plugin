@@ -28,10 +28,37 @@ module.exports = {
     path: __dirname + '/dist',
     filename: 'index_bundle.js'
   },
+  externals: {
+    react: {
+      root: 'React'
+      commonjs: 'react'
+    },
+    'react-dom': {
+      root: 'ReactDOM'
+      commonjs: 'react-dom'
+    },
+    lodash: {
+      root: '_'
+      commonjs: 'lodash'
+    }
+  },
   plugins: [
     new ModuleWebpackPlugin()
   ]
 }
+```
+
+**host usage**
+```js
+import remote from 'module-webpack-plugin/esm/remote';
+import React from 'react';
+import ReactDOM from 'react-dom';
+import _ from 'lodash',
+
+const test = await remote('http://localhost:3000/test/index.js', {
+  externals: { React, ReactDOM, _ }
+});
+test.dosomething();
 ```
 
 ## Options
