@@ -7,8 +7,12 @@ function remote(url, options = {}) {
     timeout = DEFAULT_TIMEOUT,
     externals = {},
   } = options;
-
-  return new Promise((resolve, reject) => {
+  if (remote.cached[url]) return remote.cached[url];
+  return remote.cached[url] = new Promise((resolve, _reject) => {
+    const reject = () => {
+      delete remote.cached[url];
+      return _reject.apply(this, arguments);
+    };
     fetch(url, timeout).then(data => {
       if (data.externals) {
         data.externals.forEach(key => {
@@ -35,7 +39,7 @@ function remote(url, options = {}) {
     }).catch(reject);
   });
 }
-
+remote.cached = {};
 remote.externals = {};
 
 module.exports = remote;

@@ -1,6 +1,6 @@
 {
   "name": "module-webpack-plugin",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "main": "esm/plugin/index.js",
   "module": "esm/remote/index.js",
   "types": "typings.d.ts",
