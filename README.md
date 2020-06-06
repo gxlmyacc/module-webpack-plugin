@@ -75,7 +75,11 @@ import _ from 'lodash',
 
 const test = await remote('http://localhost:3000/test/index.js', {
   // regisiter externals when call reomte
-  externals: { React, ReactDOM, _ }
+  externals: {  
+    react: React, 
+    'react-dom': ReactDOM, 
+    'lodash': _ 
+  }
 });
 
 // or register externals only once
@@ -84,6 +88,27 @@ const test = await remote('http://localhost:3000/test/index.js');
 
 
 test.dosomething();
+```
+
+or 
+
+```js
+import remote, { RemoteModule } from 'module-webpack-plugin/esm/remote';
+import React from 'react';
+import ReactDOM from 'react-dom';
+import _ from 'lodash',
+
+// or register externals only once
+Object.assign(remote.externals, { react: React, 'react-dom': ReactDOM, 'lodash': _ });
+
+const testModule = new RemoteModule('http://localhost:3000/test');
+
+const testIndex = await testModule.require('index');
+const testOther = await testModule.require('other');
+
+testIndex.dosomething();
+testOther.dosomething();
+
 ```
 
 ## Options
